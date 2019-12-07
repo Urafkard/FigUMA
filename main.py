@@ -69,7 +69,11 @@ from pybricks.robotics import DriveBase
 
 brick.sound.beep()
 
+#brick.sound.speak('Bo!')
+
 resetY_Sensor = TouchSensor(Port.S2)
+
+figureSensor = ColorSensor(Port.S1)
 
 claw_Motor = Motor(Port.A)
 y_Motor = Motor(Port.B)
@@ -105,12 +109,17 @@ def yAxis(pos):
     y_Motor.run_angle(100,-217.7*pos,Stop.BRAKE,True)
     #.run_time(250,2000,Stop.BRAKE)
 
-def xAxis(pos):
-    xAxisMotors.run_angle(200,-270*pos,Stop.BRAKE,True)
-    #x_Motor1.run_angle(200,-270*pos,Stop.BRAKE,False)
-   # x_Motor2.run_angle(200,-270*pos,Stop.BRAKE,True)
+def readColor():
+    return figureSensor.color()
 
-#reset()
+def xAxis(pos):
+    xAxisMotors.drive_time(500*pos, 0, 1000)
+    
+    #xAxisMotors.run_angle(200,-270*pos,Stop.BRAKE,True)
+    #x_Motor1.run_angle(200,-270*pos,Stop.BRAKE,False)
+    #x_Motor2.run_angle(200,-270*pos,Stop.BRAKE,True)
+
+reset()
 #yAxis()
 #toggleClaw()
 #yAxis(1)
@@ -119,8 +128,12 @@ def xAxis(pos):
 
 
 #toggleClaw()
+while(1):
+    temp = readColor()
+    if(temp != None):
+        brick.sound.beeps(temp)
+    wait(1000)
 
-
-for x in range(20):
-    xAxis(4)
-    xAxis(-4)
+#for x in range(20):
+#    xAxis(1)
+#    xAxis(-1)
