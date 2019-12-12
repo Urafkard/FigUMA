@@ -102,12 +102,17 @@ from time import time
 #
 #    return -1
 
-#colors = ("No Color", "Black", "Blue", "Green", "Yellow", "Red", "White", "Brown")
+colors = ("No Color", "Red", "Blue", "Green", "Black", "Yellow")
+
+
+
 
 class robot:
     #status Variables
     position = [0,0]
     Clawdir = -1
+    lista_lobby = []
+    posicao_lobby = 0
 
     #sensors
     resetY_Sensor = None
@@ -138,7 +143,7 @@ class robot:
         self.reset()
 
     def reset_Claw(self):
-        self.claw_Motor.run_until_stalled(1000,Stop.BRAKE,30)
+        self.claw_Motor.run_until_stalled(1000,Stop.BRAKE,35)
         self.claw_Motor.run_time(5500*-1, 1700,Stop.BRAKE)
 
     def reset_YAxis(self):
@@ -159,29 +164,74 @@ class robot:
     def yAxis(self,pos):
         self.y_Motor.run_angle(100,-217.7*pos,Stop.BRAKE,True)
 
-    def readColor(self):
-        return self.chromoSensor.rgb()
-
     def xAxis(self,pos,dir):
         self.xAxisMotors.drive_time(dir*18.75, 0, 1000*pos*4)
     
-    def moveTo(self,xPos,yPos):
+    def moveTo(self,xPos,yPos,resetY=True):
         dir = 1
-        self.reset_YAxis()
+        if(resetY):
+            self.reset_YAxis()
         if(xPos - self.position[0]<0):
             dir = -1
-        self.xAxis(abs(xPos - self.position[0]),dir)   
-        self.yAxis(yPos +0.25)
+        self.xAxis(abs(xPos - self.position[0]),dir)
+        if(not(resetY)): 
+            self.yAxis(yPos - self.position[1])
+        else:
+            self.yAxis(yPos +0.25)
         self.position[0]= xPos
         self.position[1]= yPos
     
-    def moveToLobby(self,pos):
-        self.moveTo(pos//5+5,pos%5)
+    def moveToLobby(self,pos,resetY = True):
+        if(pos%5==0):
+            resetY = True
+        self.moveTo(pos//5+5,pos%5,resetY)
 
     def moveToGame(self,xPos,yPos):
         if(xPos>4 or yPos>4):
             quit()
-        self.moveTo(xPos,yPos)            
+        self.moveTo(xPos,yPos,True)
+
+    def readColor(self):
+        while(True):
+            tempList = []
+            for x in range(10):
+                wait(200)
+                tempList += [self.testecor(self.chromoSensor.rgb())]
+            tempList = list(dict.fromkeys(tempList))
+            print(tempList)
+            if(len(tempList)==1):
+                if(tempList[0]!=0):
+                    return tempList[0]
+
+    def readLobby(self):
+        pos = 0
+        self.moveToLobby(pos,True)
+        while(len(self.lista_lobby)==0 or self.lista_lobby[-1]!=5): #le as peças ate ler amarelo
+            self.lista_lobby.append(self.readColor())
+            print(self.lista_lobby[:-1])
+            pos+=1
+            self.moveToLobby(pos,False)
+        self.lista_lobby = self.lista_lobby[:-1]
+        self.reset_YAxis()
+        print(self.lista_lobby)
+
+    def testecor(self,a):
+        print(a)
+        if(a[0]>a[1]+a[2] and a[0]+a[1]+a[2]>25):
+            return 1 #vermelho
+        elif(a[2]> a[0]+a[1] and a[0]+a[1]+a[2]>25):
+            return 2 #azul
+        elif(a[0]+a[1]+a[2]<70):
+            temp = self.chromoSensor.color()
+            if(temp==3):
+                return 3 #verde
+            elif(temp==1):
+                return 4 #preto
+            else:
+                return 0 #sem cor
+        elif(a[0]+a[1]+a[2]<180):
+            return 5 #amarelo
+
 
 
     
@@ -196,10 +246,25 @@ brick.sound.beep()
 
 random.seed(int(time()))
 clangy = robot()
-clangy.moveToLobby(0)
-clangy.toggleClaw()
-clangy.moveToGame(1,3)
-clangy.toggleClaw()
+#clangy.reset_Claw()
+clangy.readLobby()
+
+for color in clangy.lista_lobby:
+    wait(1000)
+    if color == 1:
+        brick.sound.file(SoundFile.RED)
+    if color == 2:
+        brick.sound.file(SoundFile.BLUE) 
+    if color == 3:
+        brick.sound.file(SoundFile.GREEN) 
+    if color == 4:
+        brick.sound.file(SoundFile.BLACK)
+    if color == 5:
+        brick.sound.file(SoundFile.YELLOW) 
+#clangy.moveToLobby(0)
+#clangy.toggleClaw()
+#clangy.moveToGame(1,3)
+#clangy.toggleClaw()
 #for x in range(10):
 #    positionGame = [random.randint(0,4),random.randint(0,4)]
 #    print(positionGame)
