@@ -13,98 +13,129 @@ import random
 from time import time
 
 #from itertools import product
+import itertools
 #import numpy as np
 
 
 #password maker
 # Write your program here
 
+symbolminus = 4 #black
+symbolplus = 3  #green
+symbolcross = 1 #red
+symbolcircle = 2    #blue
+
+
 #patterns
-#   MINUSES
-#sminus = numpy.array([[symbolminus,symbolminus]])
-#
-#bminus = numpy.array([[symbolminus,symbolminus,symbolminus]])
-#
-#   PLUS
-#splus = numpy.array([['nan',symbolplus,'nan'],
-#        [symbolplus,symbolplus,symbolplus],
-#        ['nan',symbolplus,'nan']])
-#
-#bplus = numpy.array([['nan','nan',symbolplus,'nan','nan'],
-#         ['nan','nan',symbolplus,'nan','nan'],
-#         [symbolplus,symbolplus,symbolplus,symbolplus,symbolplus],
-#         ['nan','nan',symbolplus,'nan','nan'],
-#         ['nan','nan',symbolplus,'nan','nan']])
-#
-#   CROSS
-#scross = numpy.array([[symbolcross,'nan',symbolcross],
-#        ['nan',symbolcross,'nan'],
-#        [symbolcross,'nan',symbolcross]])
-#
-#bcross = numpy.array([[symbolcross,'nan','nan','nan',symbolcross],
-#         ['nan',symbolcross,'nan',symbolcross,'nan'],
-#         ['nan','nan',symbolcross,'nan','nan'],
-#         ['nan',symbolcross,'nan',symbolcross,'nan'],
-#         [symbolcross,'nan','nan','nan',symbolcross]])
-#
-#   CIRCLE
-#scircle = numpy.array([[symbolcircle,symbolcircle],
-#          [symbolcircle,symbolcircle]])
-#
-#mcircle1 = numpy.array([[symbolcircle,symbolcircle,symbolcircle],
-#           [symbolcircle,'nan',symbolcircle],
-#           [symbolcircle,symbolcircle,symbolcircle]])
-#
-#mcircle2 = numpy.array([[symbolcircle,symbolcircle,symbolcircle,symbolcircle],
-#           [symbolcircle,'nan','nan',symbolcircle],
-#           [symbolcircle,'nan','nan',symbolcircle],
-#           [symbolcircle,symbolcircle,symbolcircle,symbolcircle]])
-#
-#bcircle = numpy.array([[symbolcircle,symbolcircle,symbolcircle,symbolcircle,symbolcircle],
-#           [symbolcircle,'nan','nan','nan',symbolcircle],
-#           [symbolcircle,'nan','nan','nan',symbolcircle],
-#           [symbolcircle,symbolcircle,symbolcircle,symbolcircle,symbolcircle]])
-#
-#
+#  MINUSES
+sminus = [[symbolminus,symbolminus]]
+
+bminus = [[symbolminus,symbolminus,symbolminus]]
+
+#  PLUS
+splus = [[None,symbolplus,None],
+       [symbolplus,symbolplus,symbolplus],
+       [None,symbolplus,None]]
+
+bplus = [[None,None,symbolplus,None,None],
+        [None,None,symbolplus,None,None],
+        [symbolplus,symbolplus,symbolplus,symbolplus,symbolplus],
+        [None,None,symbolplus,None,None],
+        [None,None,symbolplus,None,None]]
+
+#  CROSS
+scross = [[symbolcross,None,symbolcross],
+       [None,symbolcross,None],
+       [symbolcross,None,symbolcross]]
+
+bcross = [[symbolcross,None,None,None,symbolcross],
+        [None,symbolcross,None,symbolcross,None],
+        [None,None,symbolcross,None,None],
+        [None,symbolcross,None,symbolcross,None],
+        [symbolcross,None,None,None,symbolcross]]
+
+#  CIRCLE
+scircle = [[symbolcircle,symbolcircle],
+         [symbolcircle,symbolcircle]]
+
+mcircle1 = [[symbolcircle,symbolcircle,symbolcircle],
+          [symbolcircle,None,symbolcircle],
+          [symbolcircle,symbolcircle,symbolcircle]]
+
+mcircle2 = [[symbolcircle,symbolcircle,symbolcircle,symbolcircle],
+          [symbolcircle,None,None,symbolcircle],
+          [symbolcircle,None,None,symbolcircle],
+          [symbolcircle,symbolcircle,symbolcircle,symbolcircle]]
+
+bcircle = [[symbolcircle,symbolcircle,symbolcircle,symbolcircle,symbolcircle],
+          [symbolcircle,None,None,None,symbolcircle],
+          [symbolcircle,None,None,None,symbolcircle],
+          [symbolcircle,None,None,None,symbolcircle],
+          [symbolcircle,symbolcircle,symbolcircle,symbolcircle,symbolcircle]]
+
+figureSequence = ("bcircle","bcross","bplus","bminus","mcircle2","scross","splus","sminus","mcircle1","scircle")
+
+
 # Colors: (0:No Color, 1:Black, 2:Blue, 3:Green, 4:Yellow, 5:Red, 6:White, 7:Brown)
 
 
-#def match_pattern(input_array, pattern, wildcard_function=np.isnan):
-#
-#    pattern_shape = pattern.shape
-#    input_shape = input_array.shape
-#
-#    is_wildcard = wildcard_function(pattern) # This gets a boolean N-dim array
-#
-#    if len(pattern_shape) != len(input_shape):
-#        raise ValueError("Input array and pattern must have the same dimension")
-#
-#    shape_difference = [i_s - p_s for i_s, p_s in zip(input_shape, pattern_shape)]
-#
-#    if any((diff < -1 for diff in shape_difference)):
-#        raise ValueError("Input array cannot be smaller than pattern in any dimension")
-#
-#    dimension_iterators = [range(0, s_diff + 1) for s_diff in shape_difference]
-#
-#    # This loop will iterate over every possible "window" given the shape of the pattern
-#    for start_indexes in product(*dimension_iterators):
-#        range_indexes = [slice(start_i, start_i + p_s) for start_i, p_s in zip(start_indexes, pattern_shape)]
-#        input_match_candidate = input_array[range_indexes]
-#
-#        # This checks that for the current "window" - the candidate - every element is equal 
-#        #  to the pattern OR the element in the pattern is a wildcard
-#        if np.all(
-#            np.logical_or(
-#                is_wildcard, (input_match_candidate == pattern)
-#            )
-#        ):
-#            return start_indexes
-#
-#    return -1
+def product(*args, repeat=1):
+    # product('ABCD', 'xy') --> Ax Ay Bx By Cx Cy Dx Dy
+    # product(range(2), repeat=3) --> 000 001 010 011 100 101 110 111
+    pools = [tuple(pool) for pool in args] * repeat
+    result = [[]]
+    for pool in pools:
+        result = [x+[y] for x in result for y in pool]
+    for prod in result:
+        yield tuple(prod)
+
+def match_pattern(input_array, pattern, wildcard_function=None):
+    #print(input_array)
+    #print(pattern)
+    pattern_shape = (len(pattern),len(pattern[0]))
+    input_shape = (len(input_array),len(input_array[0]))
+
+
+    if len(pattern_shape) != len(input_shape):
+        raise ValueError("Input array and pattern must have the same dimension")
+
+    shape_difference = [i_s - p_s for i_s, p_s in zip(input_shape, pattern_shape)]
+
+    if any((diff < -1 for diff in shape_difference)):
+        raise ValueError("Input array cannot be smaller than pattern in any dimension")
+
+    dimension_iterators = [range(0, s_diff + 1) for s_diff in shape_difference]
+
+    # This loop will iterate over every possible "window" given the shape of the pattern
+    for start_indexes in product(*dimension_iterators):
+        #print(start_indexes,pattern_shape,zip(start_indexes, pattern_shape))
+        #for start_i, p_s in zip(start_indexes, pattern_shape):
+            #print(start_i, p_s)
+        range_indexes = [(start_i, start_i + p_s) for start_i, p_s in zip(start_indexes, pattern_shape)]
+        #print(range_indexes)
+        input_match_candidate = [[0 for x in range(range_indexes[1][0],range_indexes[1][1])] for y in range(range_indexes[0][0],range_indexes[0][1])]
+        #print(input_match_candidate)
+        for x in range(len(input_match_candidate)):
+            xInput = range_indexes[0][0]+x
+            for y in range(len(input_match_candidate[0])):
+                yInput = range_indexes[1][0]+y
+                input_match_candidate[x][y] = input_array[xInput][yInput]
+        #print(input_match_candidate)
+        #print(input_match_candidate)
+        # This checks that for the current "window" - the candidate - every element is equal 
+        #  to the pattern OR the element in the pattern is a wildcard
+        correct = True
+        for x in range(len(input_match_candidate)):
+            for y in range(len(input_match_candidate[x])):
+                if(pattern[x][y] != input_match_candidate[x][y] and pattern[x][y] != None):
+                    correct = False
+        if(correct):
+            return (start_indexes,pattern)
+    return -1
 
 colors = ("No Color", "Red", "Blue", "Green", "Black", "Yellow")
 
-
+VOLUME = 100
 
 
 class robot:
@@ -113,6 +144,11 @@ class robot:
     Clawdir = -1
     lista_lobby = []
     posicao_lobby = 0
+    matrix =   [[0,0,0,0,0],
+                [0,0,0,0,0],
+                [0,0,0,0,0],
+                [0,0,0,0,0],
+                [0,0,0,0,0]]
 
     #sensors
     resetY_Sensor = None
@@ -143,8 +179,9 @@ class robot:
         self.reset()
 
     def reset_Claw(self):
-        self.claw_Motor.run_until_stalled(1000,Stop.BRAKE,35)
+        self.claw_Motor.run_until_stalled(1000,Stop.BRAKE,38)
         self.claw_Motor.run_time(5500*-1, 1700,Stop.BRAKE)
+        self.Clawdir = -1
 
     def reset_YAxis(self):
         self.y_Motor.run(300)
@@ -158,7 +195,7 @@ class robot:
         print("done reset")
 
     def toggleClaw(self):
-        self.claw_Motor.run_time(5500*self.Clawdir,1200,Stop.BRAKE)
+        self.claw_Motor.run_time(5500*self.Clawdir,1300,Stop.BRAKE)
         self.Clawdir = -self.Clawdir
 
     def yAxis(self,pos):
@@ -210,13 +247,14 @@ class robot:
             self.lista_lobby.append(self.readColor())
             print(self.lista_lobby[:-1])
             pos+=1
-            self.moveToLobby(pos,False)
+            if(self.lista_lobby[-1]!=5):
+                self.moveToLobby(pos,False)
         self.lista_lobby = self.lista_lobby[:-1]
         self.reset_YAxis()
         print(self.lista_lobby)
 
     def testecor(self,a):
-        print(a)
+        #print(a)
         if(a[0]>a[1]+a[2] and a[0]+a[1]+a[2]>25):
             return 1 #vermelho
         elif(a[2]> a[0]+a[1] and a[0]+a[1]+a[2]>25):
@@ -231,6 +269,36 @@ class robot:
                 return 0 #sem cor
         elif(a[0]+a[1]+a[2]<180):
             return 5 #amarelo
+    
+    def checkFigure(self):
+        for pattern in figureSequence:
+            result = match_pattern(self.matrix,globals()[pattern])
+            #print(result)
+            
+            print(self.matrix)
+            if(result != -1):
+                for x in range(len(result[1])):
+                    for y in range(len(result[1][x])):
+                        if(result[1][x][y]==self.matrix[x+result[0][0]][y+result[0][1]]):
+                            self.matrix[x+result[0][0]][y+result[0][1]] = 0
+                brick.sound.file(SoundFile.DETECTED,VOLUME)
+                brick.display.text(pattern)
+                block = True
+                while(block):
+                    if Button.CENTER in brick.buttons():
+                        block = False
+                    wait(10)
+    
+    def movePieceTo(self, xPos, yPos):
+        self.moveToLobby(self.posicao_lobby)
+        self.matrix[xPos][yPos] = self.lista_lobby[self.posicao_lobby]
+        self.posicao_lobby += 1
+        self.toggleClaw()
+        self.moveToGame(xPos,yPos)
+        self.claw_Motor.run_time(1000,1000,Stop.BRAKE)
+        self.reset_YAxis()
+        self.reset_Claw()
+        self.checkFigure()
 
 
 
@@ -243,24 +311,58 @@ brick.sound.beep()
 
 
 
-
 random.seed(int(time()))
 clangy = robot()
+
+#print(match_pattern(clangy.matrix, globals()["sminus"]))
+#clangy.checkFigure()
 #clangy.reset_Claw()
 clangy.readLobby()
 
 for color in clangy.lista_lobby:
-    wait(1000)
-    if color == 1:
-        brick.sound.file(SoundFile.RED)
-    if color == 2:
-        brick.sound.file(SoundFile.BLUE) 
-    if color == 3:
-        brick.sound.file(SoundFile.GREEN) 
-    if color == 4:
-        brick.sound.file(SoundFile.BLACK)
-    if color == 5:
-        brick.sound.file(SoundFile.YELLOW) 
+   wait(200)
+   if color == 1:
+       brick.sound.file(SoundFile.RED,VOLUME)
+   if color == 2:
+       brick.sound.file(SoundFile.BLUE,VOLUME) 
+   if color == 3:
+       brick.sound.file(SoundFile.GREEN,VOLUME) 
+   if color == 4:
+       brick.sound.file(SoundFile.BLACK,VOLUME)
+   if color == 5:
+       brick.sound.file(SoundFile.YELLOW,VOLUME)
+
+#clangy.moveToGame(0,0)
+
+# while(block):
+#     if Button.CENTER in brick.buttons():
+#         block = False
+#     wait(10)
+
+for i in range(len(clangy.lista_lobby)):
+# #for i in range(2):
+    getting = True
+    xPos = 0
+    yPos = 0
+    if(i%5 == 0):
+        clangy.moveToGame(0,0)
+        brick.sound.file(SoundFile.HELLO)
+        block = True
+        while(block):
+            if Button.CENTER in brick.buttons():
+                block = False
+            wait(10)
+        wait(500)
+
+    while(getting):
+       xPos = random.randint(0,4)
+       yPos = random.randint(0,4)
+       if(clangy.matrix[xPos][yPos] == 0):
+           getting = False
+    clangy.movePieceTo(xPos,yPos)
+    #clangy.movePieceTo(clangy.posicao_lobby//5,clangy.posicao_lobby%5)
+
+
 #clangy.moveToLobby(0)
 #clangy.toggleClaw()
 #clangy.moveToGame(1,3)
