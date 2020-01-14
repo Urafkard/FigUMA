@@ -1,25 +1,26 @@
 #!/usr/bin/env python3
-
+import sys
 
 
 
 import ev3dev2
 from ev3dev2.motor import LargeMotor,MediumMotor, OUTPUT_A, OUTPUT_B, OUTPUT_C, OUTPUT_D, SpeedPercent,SpeedRPM, MoveTank
-from ev3dev2.senosr import INPUT_1, INPUT_2
+from ev3dev2.sensor import INPUT_1, INPUT_2, INPUT_4
 from ev3dev2.sensor.lego import ColorSensor, TouchSensor
 from ev3dev2.sound import Sound
 
-from pybricks import ev3brick as brick
-from pybricks.ev3devices import (Motor, TouchSensor, ColorSensor,
-                                 InfraredSensor, UltrasonicSensor, GyroSensor)
-from pybricks.parameters import (Port, Stop, Direction, Button, Color,
-                                 SoundFile, ImageFile, Align)
-from pybricks.tools import print, wait, StopWatch
-from pybricks.robotics import DriveBase
+#
+#from pybricks import ev3brick as brick
+#from pybricks.ev3devices import (Motor, TouchSensor, ColorSensor,
+#                                 InfraredSensor, UltrasonicSensor, GyroSensor)
+#from pybricks.parameters import (Port, Stop, Direction, Button, Color,
+#                                 SoundFile, ImageFile, Align)
+#from pybricks.tools import print, wait, StopWatch
+#from pybricks.robotics import DriveBase
 
 import random
 
-from time import time
+import time
 
 #from itertools import product
 import itertools
@@ -173,24 +174,25 @@ class robot:
 
     def __init__(self):
         self.resetY_Sensor = TouchSensor(INPUT_2)
+        self.resetClaw = TouchSensor(INPUT_4)
         self.chromoSensor = ColorSensor(INPUT_1)
         self.claw_Motor = MediumMotor(OUTPUT_A)
 
         self.y_Motor = LargeMotor(OUTPUT_B)
 
-        self.xAxisMotors = MotorTank(OUTPUT_C,OUTPUT_D)
+        self.xAxisMotors = MoveTank(OUTPUT_C,OUTPUT_D)
 
         self.reset()
 
     def reset_Claw(self):
-        self.claw_Motor.on(SpeedPercent(10))
-        self.claw_Motor.wait_until_not_moving(1000)
+        self.claw_Motor.on(SpeedPercent(40))
+        self.resetClaw.wait_for_pressed()
         self.claw_Motor.stop()
-        self.claw_Motor.on_for_seconds(SpeedPercent(-10),2)
+        self.claw_Motor.on_for_seconds(SpeedPercent(-50),1.25)
         self.Clawdir = -1
 
     def reset_YAxis(self):
-        self.y_Motor.on(SpeedRPM(200))
+        self.y_Motor.on(SpeedRPM(175))
         self.resetY_Sensor.wait_for_pressed()
         self.y_Motor.stop()
 
@@ -200,14 +202,14 @@ class robot:
         print("done reset")
 
     def toggleClaw(self):
-        self.claw_Motor.on_for_seconds(SpeedRPM(200*self.Clawdir),1)
+        self.claw_Motor.on_for_seconds(SpeedRPM(175*self.Clawdir),1)
         self.Clawdir = -self.Clawdir
 
     def yAxis(self,pos):
-        self.y_Motor.run_angle(SpeedRPM(200),-217.7*pos)
+        self.y_Motor.on_for_degrees(SpeedPercent(20),-217.7*pos)
 
     def xAxis(self,pos,dir):
-        self.xAxisMotors.on_for_degrees(SpeedPercent(10*dir),75*pos)
+        self.xAxisMotors.on_for_degrees(SpeedPercent(10*dir),SpeedPercent(10*dir),156.25*pos)
     
     def moveTo(self,xPos,yPos,resetY=True):
         dir = 1
@@ -237,8 +239,9 @@ class robot:
         while(True):
             tempList = []
             for x in range(10):
-                wait(200)
-                tempList += [self.testecor(self.chromoSensor.rgb())]
+                time.sleep(.200)
+                print(self.chromoSensor.raw, file=sys.stderr)
+                tempList += [self.testecor(self.chromoSensor.raw)]
             tempList = list(dict.fromkeys(tempList))
             print(tempList)
             if(len(tempList)==1):
@@ -291,7 +294,7 @@ class robot:
                 while(block):
                     if Button.CENTER in brick.buttons():
                         block = False
-                    wait(10)
+                    time.sleep(0.01)
     
     def movePieceTo(self, xPos, yPos):
         self.moveToLobby(self.posicao_lobby)
@@ -309,13 +312,13 @@ class robot:
     
     
 
-
-brick.sound.beep()
-
-
+#Sound.beep()
+#brick.sound.beep()
 
 
-random.seed(int(time()))
+
+
+random.seed(int(time.time()))
 clangy = robot()
 
 #print(match_pattern(clangy.matrix, globals()["sminus"]))
@@ -355,8 +358,8 @@ for i in range(len(clangy.lista_lobby)):
         while(block):
             if Button.CENTER in brick.buttons():
                 block = False
-            wait(10)
-        wait(500)
+            time.sleep(0.01)
+        time.sleep(0.5)
 
     while(getting):
        xPos = random.randint(0,4)

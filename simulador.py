@@ -201,7 +201,7 @@ class game:
     def __init__(self):
         printMatrix(self.matrix)
         #self.lista_lobby = [2, 1, 4, 1, 4, 4, 1, 4, 4, 3, 2, 1, 4, 1, 4, 2, 3, 3, 1, 3, 4, 1, 1, 2, 3, 4, 4, 1, 1, 3, 2]
-        for _ in range(125):
+        for _ in range(25):
             self.lista_lobby += [randint(1,4)]
         print(tuple(map(lambda x: symbols[x],self.lista_lobby)))
         print(self.lista_lobby)
@@ -221,7 +221,7 @@ class game:
             result = match_pattern(self.matrix,globals()[pattern])
             if(result != -1):
                 globals()["score"] += globals()[pattern + "p"]
-                #print(pattern)
+                print(pattern)
                 for x in range(len(result[1])):
                     for y in range(len(result[1][x])):
                         if(result[1][x][y]==self.matrix[x+result[0][0]][y+result[0][1]]):
@@ -277,7 +277,7 @@ for i in range(len(temp.lista_lobby)):
   for x in allPoints:
     if(temp.matrix[x[0]][x[1]] == 0):
       temp.insertPiece(x[0],x[1])
-      #printMatrix(temp.matrix)
+      printMatrix(temp.matrix)
       found = True
       break
     

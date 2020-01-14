@@ -26,58 +26,28 @@ symbolcross = 1 #red
 symbolcircle = 2    #blue
 
 
-#patterns
-#  MINUSES
-sminus = [[symbolminus,symbolminus]]
+heur = 2
 
-bminus = [[symbolminus,symbolminus,symbolminus]]
-
-#  PLUS
-splus = [[None,symbolplus,None],
-       [symbolplus,symbolplus,symbolplus],
-       [None,symbolplus,None]]
-
-bplus = [[None,None,symbolplus,None,None],
-        [None,None,symbolplus,None,None],
-        [symbolplus,symbolplus,symbolplus,symbolplus,symbolplus],
-        [None,None,symbolplus,None,None],
-        [None,None,symbolplus,None,None]]
-
-#  CROSS
-scross = [[symbolcross,None,symbolcross],
-       [None,symbolcross,None],
-       [symbolcross,None,symbolcross]]
-
-bcross = [[symbolcross,None,None,None,symbolcross],
-        [None,symbolcross,None,symbolcross,None],
-        [None,None,symbolcross,None,None],
-        [None,symbolcross,None,symbolcross,None],
-        [symbolcross,None,None,None,symbolcross]]
-
-#  CIRCLE
-scircle = [[symbolcircle,symbolcircle],
-         [symbolcircle,symbolcircle]]
-
-mcircle1 = [[symbolcircle,symbolcircle,symbolcircle],
-          [symbolcircle,None,symbolcircle],
-          [symbolcircle,symbolcircle,symbolcircle]]
-
-mcircle2 = [[symbolcircle,symbolcircle,symbolcircle,symbolcircle],
-          [symbolcircle,None,None,symbolcircle],
-          [symbolcircle,None,None,symbolcircle],
-          [symbolcircle,symbolcircle,symbolcircle,symbolcircle]]
-
-bcircle = [[symbolcircle,symbolcircle,symbolcircle,symbolcircle,symbolcircle],
-          [symbolcircle,None,None,None,symbolcircle],
-          [symbolcircle,None,None,None,symbolcircle],
-          [symbolcircle,None,None,None,symbolcircle],
-          [symbolcircle,symbolcircle,symbolcircle,symbolcircle,symbolcircle]]
-
-figureSequence = ("bcircle","bcross","bplus","bminus","mcircle2","scross","splus","sminus","mcircle1","scircle")
+#heuristica 1 espaços
+mapheur1 = [[symbolminus, symbolminus, symbolcross,None,       symbolcross],
+            [None,        None,        None,       symbolcross,None],
+            [None,        None,        symbolcross,symbolplus, symbolcross],
+            [symbolcircle,symbolcircle,symbolplus, symbolplus, symbolplus],
+            [symbolcircle,symbolcircle,None,       symbolplus, None]]
 
 
-# Colors: (0:No Color, 1:Black, 2:Blue, 3:Green, 4:Yellow, 5:Red, 6:White, 7:Brown)
+mapheur2 = [[[[-1,-1,-1,3],[-1,-1,-1,3],[6,-1,-1,4]],[[-1,-1,-1,1],[-1,-1,-1,1],[-1,-1,-1,1]],[[-1,-1,-1,-1],[-1,-1,-1,2],[-1,-1,8,3]],[[-1,-1,-1,2],[-1,-1,-1,4],[-1,-1,-1,2]],[[3,-1,-1,-1],[-1,-1,-1,-1],[3,-1,-1,-1]]],
+            [[[25,25,25,25],[25,25,25,25],[25,25,25,25]],[[1,-1,-1,-1],[1,-1,-1,-1],[1,-1,-1,-1]],[[-1,-1,1,-1],[-1,-1,1,-1],[-1,-1,1,-1]],[[2,-1,-1,-1],[2,-1,-1,-1],[2,-1,-1,-1]],[[24,24,24,24],[24,24,24,24],[24,24,24,24]]],
+            [[[-1,-1,2,-1],[-1,-1,-1,-1],[-1,-1,4,-1]],[[-1,-1,3,-1],[-1,-1,2,-1],[-1,-1,2,-1]],[[-1,-1,-1,-1],[5,-1,5,-1],[9,-1,9,-1]],[[-1,-1,4,-1],[-1,-1,3,-1],[-1,-1,3,-1]],[[-1,-1,5,-1],[-1,-1,-1,-1],[-1,-1,5,-1]]],
+            [[[-1,1,-1,-1],[-1,1,-1,-1],[-1,1,-1,-1]],[[-1,-1,-1,-1],[4,4,-1,-1],[7,1,-1,-1]],[[-1,-1,6,-1],[-1,-1,4,-1],[-1,-1,6,-1]],[[-1,-1,-1,-1],[3,8,-1,-1],[4,-1,-1,-1]],[[-1,-1,-1,-1],[-1,6,-1,-1],[-1,-1,-1,-1]]],
+            [[[-1,-1,-1,-1],[-1,3,-1,-1],[8,-1,-1,-1]],[[-1,2,-1,-1],[-1,2,-1,7],[-1,2,-1,6]],[[-1,-1,-1,-1],[-1,-1,-1,6],[-1,-1,7,7]],[[-1,-1,-1,-1],[-1,5,-1,5],[-1,-1,-1,5]],[[-1,-1,-1,-1],[-1,7,-1,-1],[5,-1,-1,-1]]]]
 
+
+pecasExistentes = []
+pecasExistentesOld = []
+
+pecasRequeridasMax = (9,-1,9,3)
+pecasRequeridasMin = (5,4,5,2)
 
 def product(*args, repeat=1):
     # product('ABCD', 'xy') --> Ax Ay Bx By Cx Cy Dx Dy
@@ -88,6 +58,122 @@ def product(*args, repeat=1):
         result = [x+[y] for x in result for y in pool]
     for prod in result:
         yield tuple(prod)
+
+
+allPoints = []
+
+for x in product(range(5),repeat=2):
+  allPoints += [x]
+
+
+def sortF(t,symbol,rank):
+  if(mapheur2[t[0]][t[1]][rank][symbol-1] == -1):
+    return 255
+  else:
+    return mapheur2[t[0]][t[1]][rank][symbol-1]
+
+def sortBySymbol(symbol):
+  global allPoints
+  rank = getPriorityRank(symbol)
+  #print("rank: " + str(rank))
+  allPoints = sorted(allPoints, key=lambda t: sortF(t,symbol,rank), reverse=False)
+
+score = 0
+
+
+
+def getPriorityRank(symbol):
+  #print(str(symbol), "peças: ", pecasExistentes[symbol-1] )
+  if(pecasExistentes[symbol-1]/pecasRequeridasMax[symbol-1]>=1 and symbol != 2):
+    return 2
+  elif(pecasExistentes[symbol-1]/pecasRequeridasMin[symbol-1]>=1):
+    return 1
+  else:
+    return 0
+
+
+
+
+
+
+
+#patterns
+# MINUS
+sminus = [[symbolminus,symbolminus]]
+sminusp = 4
+
+bminus = [[symbolminus,symbolminus,symbolminus]]
+bminusp = 8
+
+#  PLUS
+splus = [[None,symbolplus,None],
+       [symbolplus,symbolplus,symbolplus],
+       [None,symbolplus,None]]
+splusp = 32
+
+bplus = [[None,None,symbolplus,None,None],
+        [None,None,symbolplus,None,None],
+        [symbolplus,symbolplus,symbolplus,symbolplus,symbolplus],
+        [None,None,symbolplus,None,None],
+        [None,None,symbolplus,None,None]]
+bplusp = 512
+
+#  CROSS
+scross = [[symbolcross,None,symbolcross],
+       [None,symbolcross,None],
+       [symbolcross,None,symbolcross]]
+scrossp = 32
+
+bcross = [[symbolcross,None,None,None,symbolcross],
+        [None,symbolcross,None,symbolcross,None],
+        [None,None,symbolcross,None,None],
+        [None,symbolcross,None,symbolcross,None],
+        [symbolcross,None,None,None,symbolcross]]
+bcrossp = 512
+
+#  CIRCLE
+scircle = [[symbolcircle,symbolcircle],
+         [symbolcircle,symbolcircle]]
+scirclep = 16
+
+mcircle1 = [[symbolcircle,symbolcircle,symbolcircle],
+          [symbolcircle,None,symbolcircle],
+          [symbolcircle,symbolcircle,symbolcircle]]
+mcircle1p = 64
+
+mcircle2 = [[symbolcircle,symbolcircle,symbolcircle,symbolcircle],
+          [symbolcircle,None,None,symbolcircle],
+          [symbolcircle,None,None,symbolcircle],
+          [symbolcircle,symbolcircle,symbolcircle,symbolcircle]]
+mcircle2p = 4096
+
+bcircle = [[symbolcircle,symbolcircle,symbolcircle,symbolcircle,symbolcircle],
+          [symbolcircle,None,None,None,symbolcircle],
+          [symbolcircle,None,None,None,symbolcircle],
+          [symbolcircle,None,None,None,symbolcircle],
+          [symbolcircle,symbolcircle,symbolcircle,symbolcircle,symbolcircle]]
+bcirclep = 65536
+
+figureSequence = ("bcircle","bcross","bplus","bminus","mcircle2","scross","splus","sminus","mcircle1","scircle")
+
+symbols = (" ","x","o","+","-")
+
+
+
+def printMatrix(matrix):
+    text = "-----\n"
+    for x in range(len(matrix)):
+        for y in range(len(matrix[0])):
+            text += symbols[int(matrix[x][y])]
+        text = text + "\n"
+    print(text)
+
+
+
+# Colors: (0:No Color, 1:Black, 2:Blue, 3:Green, 4:Yellow, 5:Red, 6:White, 7:Brown)
+
+
+
 
 def match_pattern(input_array, pattern, wildcard_function=None):
     #print(input_array)
@@ -135,6 +221,8 @@ def match_pattern(input_array, pattern, wildcard_function=None):
 
 colors = ("No Color", "Red", "Blue", "Green", "Black", "Yellow")
 
+
+
 VOLUME = 100
 
 
@@ -175,6 +263,7 @@ class robot:
         self.x_Motor2.set_run_settings(200, 100)
 
         self.xAxisMotors = DriveBase(self.x_Motor1,self.x_Motor2,50,100)
+
 
         self.reset()
 
@@ -251,6 +340,15 @@ class robot:
                 self.moveToLobby(pos,False)
         self.lista_lobby = self.lista_lobby[:-1]
         self.reset_YAxis()
+        countOfChars = {i:self.lista_lobby.count(i) for i in self.lista_lobby}
+        print(countOfChars)
+        global pecasExistentes
+        global pecasExistentesOld
+        pecasExistentes += [countOfChars[1]]
+        pecasExistentes += [countOfChars[2]]
+        pecasExistentes += [countOfChars[3]]
+        pecasExistentes += [countOfChars[4]]
+        pecasExistentesOld = pecasExistentes.copy()
         print(self.lista_lobby)
 
     def testecor(self,a):
@@ -274,12 +372,12 @@ class robot:
         for pattern in figureSequence:
             result = match_pattern(self.matrix,globals()[pattern])
             #print(result)
-            
             print(self.matrix)
             if(result != -1):
                 for x in range(len(result[1])):
                     for y in range(len(result[1][x])):
                         if(result[1][x][y]==self.matrix[x+result[0][0]][y+result[0][1]]):
+                            pecasExistentes[result[1][x][y]-1] -= 1
                             self.matrix[x+result[0][0]][y+result[0][1]] = 0
                 brick.sound.file(SoundFile.DETECTED,VOLUME)
                 brick.display.text(pattern)
@@ -320,7 +418,7 @@ clangy = robot()
 clangy.readLobby()
 
 for color in clangy.lista_lobby:
-   wait(200)
+   wait(10)
    if color == 1:
        brick.sound.file(SoundFile.RED,VOLUME)
    if color == 2:
@@ -338,28 +436,76 @@ for color in clangy.lista_lobby:
 #     if Button.CENTER in brick.buttons():
 #         block = False
 #     wait(10)
+if(heur==1):
+    print("hello?")
+    print(clangy.lista_lobby)
+    for i in range(len(clangy.lista_lobby)):
+        if(i%5 == 0):
+            clangy.moveToGame(0,0)
+            brick.sound.file(SoundFile.HELLO)
+            block = True
+            while(block):
+                if Button.CENTER in brick.buttons():
+                    block = False
+                wait(10)
+            wait(500)
+        found = False
+        for mapX in range(len(mapheur1)):
+            for mapY in range(len(mapheur1[0])):
+                if(mapheur1[mapX][mapY] == clangy.lista_lobby[clangy.posicao_lobby] and clangy.matrix[mapX][mapY] == 0):
+                    found = True
+                    #print(pecasExistentes)
+                    clangy.movePieceTo(mapX,mapY)
+                    break
+            if(found):
+                break
 
-for i in range(len(clangy.lista_lobby)):
+
+
+if(heur == 2):
+    for i in range(len(clangy.lista_lobby)):
+        found = False
+        if(i%5 == 0):
+            clangy.moveToGame(0,0)
+            brick.sound.file(SoundFile.HELLO)
+            block = True
+            while(block):
+                if Button.CENTER in brick.buttons():
+                    block = False
+                wait(10)
+            wait(500)
+        sortBySymbol(clangy.lista_lobby[clangy.posicao_lobby])
+        for x in allPoints:
+            if(clangy.matrix[x[0]][x[1]] == 0):
+                clangy.movePieceTo(x[0],x[1])
+                printMatrix(clangy.matrix)
+                found = True
+                break
+
+
+
+
+#for i in range(len(clangy.lista_lobby)):
 # #for i in range(2):
-    getting = True
-    xPos = 0
-    yPos = 0
-    if(i%5 == 0):
-        clangy.moveToGame(0,0)
-        brick.sound.file(SoundFile.HELLO)
-        block = True
-        while(block):
-            if Button.CENTER in brick.buttons():
-                block = False
-            wait(10)
-        wait(500)
+#    getting = True
+#    xPos = 0
+#    yPos = 0
+#    if(i%5 == 0):
+#        clangy.moveToGame(0,0)
+#        brick.sound.file(SoundFile.HELLO)
+#        block = True
+#        while(block):
+#            if Button.CENTER in brick.buttons():
+#                block = False
+#            wait(10)
+#        wait(500)
 
-    while(getting):
-       xPos = random.randint(0,4)
-       yPos = random.randint(0,4)
-       if(clangy.matrix[xPos][yPos] == 0):
-           getting = False
-    clangy.movePieceTo(xPos,yPos)
+#    while(getting):
+#       xPos = random.randint(0,4)
+#       yPos = random.randint(0,4)
+#       if(clangy.matrix[xPos][yPos] == 0):
+#           getting = False
+#    clangy.movePieceTo(xPos,yPos)
     #clangy.movePieceTo(clangy.posicao_lobby//5,clangy.posicao_lobby%5)
 
 
